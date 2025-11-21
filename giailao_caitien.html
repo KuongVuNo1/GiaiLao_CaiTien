@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Màn Hình Chờ - Đồng Hồ Lật</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Dancing+Script:wght@700&display=swap');
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(-45deg, #ffd1dc, #ffb3c6, #ffc9d9, #ffe4e9);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Arial', sans-serif;
+            position: relative;
+            transition: all 0.5s ease;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Theme Switcher Button */
+        .theme-switcher {
+            position: fixed;
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+            z-index: 1000;
+        }
+
+        .theme-btn {
+            background: linear-gradient(135deg, #ff69b4, #ff1493);
+            color: white;
+            border: none;
+            padding: 15px 10px;
+            border-radius: 10px 0 0 10px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: -3px 0 10px rgba(255, 105, 180, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .theme-btn:hover {
+            padding-right: 15px;
+        }
+
+        .theme-menu {
+            position: absolute;
+            right: 100%;
+            top: 0;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(20px);
+            transition: all 0.3s ease;
+            min-width: 250px;
+        }
+
+        .theme-switcher:hover .theme-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0);
+        }
+
+        .theme-menu h3 {
+            color: #ff1493;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .theme-option {
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .theme-option:hover {
+            transform: translateX(-5px);
+            border-color: #ff69b4;
+        }
+
+        .theme-option.active {
+            background: linear-gradient(135deg, #ffe4e9, #ffd1dc);
+            border-color: #ff1493;
+        }
+
+        /* Finish line */
+        .finish-line {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 20px;
+            background: repeating-linear-gradient(90deg, #000 0px, #ff0000 10px, #fff 10px, #ff0000 20px);
+            z-index: 99;
+            border: 2px solid #333;
+            border-radius: 5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .finish-flag {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 40px;
+            animation: wave 2s infinite ease-in-out;
+        }
+
+        @keyframes wave {
+            0%, 100% { transform: translateX(-50%) rotate(-10deg); }
+            50% { transform: translateX(-50%) rotate(10deg); }
+        }
+
+        /* Reload button */
+        .reload-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #ff69b4;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 4px 10px rgba(255, 105, 180, 0.5);
+            transition: all 0.3s ease;
+            width: 50px;
+            height: 50px;
+        }
+
+        .reload-btn:hover {
+            background: #ff1493;
+            transform: scale(1.1);
+        }
+
+        /* Weather Widget */
+        .weather-widget {
+            position: absolute;
+            top: 20px;
+            right: 80px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 50;
+        }
+
+        .weather-widget.show {
+            display: block;
+        }
+
+        .weather-temp {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ff1493;
+        }
+
+        .weather-desc {
+            font-size: 16px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Panda running around border */
+        .panda-runner {
+            position: absolute;
+            font-size: 50px;
+            z-index: 100;
+            animation: runAroundBorder 60s linear infinite;
+        }
+
+        @keyframes runAroundBorder {
+            0% { top: 0; left: 0; transform: rotate(90deg); }
+            25% { top: 0; left: calc(100% - 60px); transform: rotate(180deg); }
+            50% { top: calc(100% - 60px); left: calc(100% - 60px); transform: rotate(270deg); }
+            75% { top: calc(100% - 60px); left: 0; transform: rotate(360deg); }
+            100% { top: 0; left: 0; transform: rotate(450deg); }
+        }
+
+        /* Floating particles */
+        .particle {
+            position: absolute;
+            font-size: 30px;
+            animation: float 15s infinite ease-in-out;
+            opacity: 0.6;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0.6; }
+            50% { transform: translateY(-100px) translateX(50px) rotate(180deg); opacity: 0.9; }
+        }
+
+        /* Shooting stars */
+        .shooting-star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px 2px white;
+            animation: shoot 3s linear;
+        }
+
+        @keyframes shoot {
+            0% { transform: translateX(0) translateY(0); opacity: 1; }
+            100% { transform: translateX(-300px) translateY(300px); opacity: 0; }
+        }
+
+        /* Fireworks */
+        .firework {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            animation: explode 1s ease-out;
+        }
+
+        @keyframes explode {
+            0% { transform: translate(0, 0); opacity: 1; }
+            100% { transform: translate(var(--x), var(--y)); opacity: 0; }
+        }
+
+        /* Snowflakes */
+        .snowflake {
+            position: absolute;
+            color: white;
+            font-size: 20px;
+            animation: fall linear;
+            opacity: 0.8;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(360deg); }
+        }
+
+        /* Input section */
+        .input-section {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 200;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(255, 105, 180, 0.4);
+        }
+
+        .input-section h2 {
+            color: #ff1493;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .input-section input {
+            width: 400px;
+            padding: 15px;
+            font-size: 18px;
+            border: 3px solid #ff69b4;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-section input:focus {
+            border-color: #ff1493;
+            box-shadow: 0 0 10px rgba(255, 105, 180, 0.5);
+        }
+
+        .input-section button {
+            background: linear-gradient(135deg, #ff69b4, #ff1493);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 105, 180, 0.4);
+        }
+
+        .input-section button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 105, 180, 0.6);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .container {
+            text-align: center;
+            z-index: 10;
+            perspective: 1000px;
+        }
+
+        .date-display {
+            color: rgba(102, 51, 102, 0.9);
+            font-size: 28px;
+            margin-bottom: 40px;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 10px rgba(255, 105, 180, 0.3);
+            font-weight: 600;
+        }
+
+        .custom-text {
+            color: #ff1493;
+            font-size: 150px;
+            font-weight: bold;
+            font-family: 'Pacifico', cursive;
+            margin-bottom: 30px;
+            text-shadow: 0 4px 15px rgba(255, 105, 180, 0.5);
+            animation: fadeIn 1s ease-in;
+            max-width: 90vw;
+            word-wrap: break-word;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .clock-container {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .clock-container.mode-3d {
+            animation: rotate3d 20s infinite ease-in-out;
+        }
+
+        @keyframes rotate3d {
+            0% { transform: rotateY(-15deg) rotateX(5deg); }
+            25% { transform: rotateY(15deg) rotateX(-5deg); }
+            50% { transform: rotateY(-15deg) rotateX(5deg); }
+            75% { transform: rotateY(15deg) rotateX(-5deg); }
+            100% { transform: rotateY(-15deg) rotateX(5deg); }
+        }
+
+        .time-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .flip-card {
+            position: relative;
+            width: 280px;
+            height: 360px;
+            perspective: 1000px;
+            margin: 5px;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .flip-card.flipping .flip-card-inner {
+            transform: rotateX(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 180px;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(145deg, #ff69b4, #ff1493);
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(255, 105, 180, 0.5);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .flip-card-front::before,
+        .flip-card-back::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background: rgba(0, 0, 0, 0.2);
+            top: 50%;
+            left: 0;
+        }
+
+        .flip-card-back {
+            transform: rotateX(180deg);
+        }
+
+        .separator {
+            font-size: 180px;
+            color: #ff69b4;
+            font-weight: bold;
+            margin: 0 30px;
+            animation: blink 2s infinite;
+            text-shadow: 0 0 20px rgba(255, 105, 180, 0.5);
+        }
+
+        @keyframes blink {
+            0%, 49%, 100% { opacity: 1; }
+            50%, 99% { opacity: 0.3; }
+        }
+
+        .label {
+            color: #ff1493;
+            font-size: 36px;
+            margin-top: 20px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-shadow: 0 2px 5px rgba(255, 105, 180, 0.3);
+        }
+
+        .location {
+            color: #ff1493;
+            font-size: 20px;
+            margin-top: 50px;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 10px rgba(255, 105, 180, 0.3);
+            font-weight: 600;
+        }
+
+        /* Celebration effects */
+        .celebration {
+            animation: celebrate 2s ease;
+        }
+
+        @keyframes celebrate {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @media (max-width: 768px) {
+            .input-section input { width: 300px; }
+            .theme-switcher { right: 0; top: 20px; transform: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Switcher -->
+    <div class="theme-switcher">
+        <button class="theme-btn">🎨</button>
+        <div class="theme-menu">
+            <h3>⚙️ Chọn Chủ Đề</h3>
+            <div class="theme-option active" onclick="setTheme('pink')">
+                <span>💖</span> Hồng (Mặc định)
+            </div>
+            <div class="theme-option" onclick="setTheme('dark')">
+                <span>🌙</span> Dark Mode
+            </div>
+            <div class="theme-option" onclick="setTheme('blue')">
+                <span>💙</span> Xanh Dương
+            </div>
+            <div class="theme-option" onclick="setTheme('purple')">
+                <span>💜</span> Tím
+            </div>
+            <div class="theme-option" onclick="setTheme('rainbow')">
+                <span>🌈</span> Rainbow
+            </div>
+            <div class="theme-option" onclick="setTheme('christmas')">
+                <span>🎄</span> Giáng Sinh
+            </div>
+            <div class="theme-option" onclick="toggleWeather()">
+                <span>🌤️</span> Thời Tiết
+            </div>
+            <div class="theme-option" onclick="toggle3D()">
+                <span>🎪</span> 3D Mode
+            </div>
+        </div>
+    </div>
+
+    <!-- Weather Widget -->
+    <div class="weather-widget" id="weatherWidget">
+        <div class="weather-temp">🌤️ 25°C</div>
+        <div class="weather-desc">Hà Nội - Nhiều mây</div>
+    </div>
+
+    <!-- Finish line -->
+    <div class="finish-line">
+        <div class="finish-flag">🏁</div>
+    </div>
+
+    <!-- Reload button -->
+    <button class="reload-btn" id="reloadBtn" onclick="reloadPage()">🔄</button>
+
+    <!-- Panda runner -->
+    <div class="panda-runner">🐼</div>
+
+    <!-- Input Section -->
+    <div class="input-section" id="inputSection">
+        <h2>✨ Nhập Tin Nhắn Của Bạn ✨</h2>
+        <input type="text" id="customTextInput" placeholder="Nhập nội dung muốn hiển thị..." maxlength="100">
+        <br>
+        <button onclick="showClock()">Hiển Thị Đồng Hồ</button>
+    </div>
+
+    <!-- Clock Container -->
+    <div class="container hidden" id="clockContainer">
+        <div class="date-display" id="dateDisplay"></div>
+        <div class="custom-text hidden" id="customText"></div>
+        
+        <div class="clock-container" id="clockWrapper">
+            <div class="time-section">
+                <div class="flip-card" id="hourTens">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">0</div>
+                        <div class="flip-card-back">0</div>
+                    </div>
+                </div>
+                <div class="label">Giờ</div>
+            </div>
+
+            <div class="time-section">
+                <div class="flip-card" id="hourOnes">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">0</div>
+                        <div class="flip-card-back">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="separator">:</div>
+
+            <div class="time-section">
+                <div class="flip-card" id="minuteTens">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">0</div>
+                        <div class="flip-card-back">0</div>
+                    </div>
+                </div>
+                <div class="label">Phút</div>
+            </div>
+
+            <div class="time-section">
+                <div class="flip-card" id="minuteOnes">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">0</div>
+                        <div class="flip-card-back">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="location">📍 Khầy Vũ Quốc Cường</div>
+    </div>
+
+    <script>
+        let currentTheme = 'pink';
+        let weatherVisible = false;
+        let mode3D = false;
+        let lastMinute = -1;
+
+        const themes = {
+            pink: {
+                bg: 'linear-gradient(-45deg, #ffd1dc, #ffb3c6, #ffc9d9, #ffe4e9)',
+                card: 'linear-gradient(145deg, #ff69b4, #ff1493)',
+                text: '#ff1493',
+                particles: ['🌸', '🌺', '🌷', '💐', '🌹']
+            },
+            dark: {
+                bg: 'linear-gradient(-45deg, #1a1a2e, #16213e, #0f3460, #1a1a2e)',
+                card: 'linear-gradient(145deg, #00d4ff, #0099ff)',
+                text: '#00d4ff',
+                particles: ['⭐', '✨', '💫', '🌟', '⚡']
+            },
+            blue: {
+                bg: 'linear-gradient(-45deg, #a8dadc, #457b9d, #1d3557, #a8dadc)',
+                card: 'linear-gradient(145deg, #457b9d, #1d3557)',
+                text: '#1d3557',
+                particles: ['💙', '💎', '🔷', '🌊', '❄️']
+            },
+            purple: {
+                bg: 'linear-gradient(-45deg, #e0c3fc, #8ec5fc, #c5a3ff, #e0c3fc)',
+                card: 'linear-gradient(145deg, #9b59b6, #8e44ad)',
+                text: '#8e44ad',
+                particles: ['💜', '🔮', '🦄', '✨', '🌸']
+            },
+            rainbow: {
+                bg: 'linear-gradient(-45deg, #ff6b6b, #4ecdc4, #45b7d1, #ffa07a, #98d8c8, #ff6b6b)',
+                card: 'linear-gradient(145deg, #ff6b6b, #4ecdc4)',
+                text: '#ff6b6b',
+                particles: ['🌈', '🦋', '🌺', '✨', '🎨']
+            },
+            christmas: {
+                bg: 'linear-gradient(-45deg, #c41e3a, #165b33, #ffffff, #c41e3a)',
+                card: 'linear-gradient(145deg, #c41e3a, #165b33)',
+                text: '#c41e3a',
+                particles: ['❄️', '🎄', '⛄', '🎅', '🎁']
+            }
+        };
+
+        // Create floating particles
+        function createParticles() {
+            document.querySelectorAll('.particle').forEach(p => p.remove());
+            const particles = themes[currentTheme].particles;
+            for (let i = 0; i < 15; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.textContent = particles[Math.floor(Math.random() * particles.length)];
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                document.body.appendChild(particle);
+            }
+        }
+
+        // Set theme
+        function setTheme(theme) {
+            currentTheme = theme;
+            const themeData = themes[theme];
+            
+            document.body.style.background = themeData.bg;
+            document.body.style.backgroundSize = '400% 400%';
+            
+            document.querySelectorAll('.flip-card-front, .flip-card-back').forEach(el => {
+                el.style.background = themeData.card;
+            });
+            
+            document.querySelectorAll('.separator, .label, .location, .custom-text, .date-display').forEach(el => {
+                el.style.color = themeData.text;
+            });
+
+            document.querySelectorAll('.theme-option').forEach(opt => opt.classList.remove('active'));
+            event.target.closest('.theme-option').classList.add('active');
+
+            createParticles();
+
+            // Special effects for Christmas theme
+            if (theme === 'christmas') {
+                createSnowfall();
+            } else {
+                document.querySelectorAll('.snowflake').forEach(s => s.remove());
+            }
+        }
+
+        // Create snowfall
+        function createSnowfall() {
+            setInterval(() => {
+                const snowflake = document.createElement('div');
+                snowflake.className = 'snowflake';
+                snowflake.textContent = '❄️';
+                snowflake.style.left = Math.random() * 100 + '%';
+                snowflake.style.fontSize = (Math.random() * 20 + 10) + 'px';
+                snowflake.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                document.body.appendChild(snowflake);
+
+                setTimeout(() => snowflake.remove(), 5000);
+            }, 200);
+        }
+
+        // Create shooting stars
+        function createShootingStar() {
+            const star = document.createElement('div');
+            star.className = 'shooting-star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 50 + '%';
+            document.body.appendChild(star);
+
+            setTimeout(() => star.remove(), 3000);
+        }
+
+        // Create fireworks
+        function createFireworks(x, y) {
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'firework';
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                
+                const angle = (Math.PI * 2 * i) / 30;
+                const velocity = 50 + Math.random() * 50;
+                particle.style.setProperty('--x', Math.cos(angle) * velocity + 'px');
+                particle.style.setProperty('--y', Math.sin(angle) * velocity + 'px');
+                
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), 1000);
+            }
+        }
+
+        // Toggle weather
+        function toggleWeather() {
+            weatherVisible = !weatherVisible;
+            const widget = document.getElementById('weatherWidget');
+            widget.classList.toggle('show', weatherVisible);
+        }
+
+        // Toggle 3D mode
+        function toggle3D() {
+            mode3D = !mode3D;
+            const clockWrapper = document.getElementById('clockWrapper');
+            if (mode3D) {
+                clockWrapper.classList.add('mode-3d');
+            } else {
+                clockWrapper.classList.remove('mode-3d');
+            }
+        }
+
+        // Check for special times
+        function checkSpecialTime(hours, minutes) {
+            const time = hours + ':' + minutes;
+            const specialTimes = ['12:34', '23:45', '11:11', '22:22', '00:00'];
+            
+            if (specialTimes.includes(time)) {
+                document.getElementById('clockWrapper').classList.add('celebration');
+                createFireworks(window.innerWidth / 2, window.innerHeight / 2);
+                setTimeout(() => {
+                    document.getElementById('clockWrapper').classList.remove('celebration');
+                }, 2000);
+            }
+
+            // Fireworks on round hours
+            if (minutes === '00' && lastMinute !== 0) {
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(() => {
+                        createFireworks(
+                            Math.random() * window.innerWidth,
+                            Math.random() * window.innerHeight / 2
+                        );
+                    }, i * 200);
+                }
+            }
+            lastMinute = parseInt(minutes);
+        }
+
+        // Shooting stars interval
+        setInterval(() => {
+            if (Math.random() < 0.1) {
+                createShootingStar();
+            }
+        }, 3000);
+
+        createParticles();
+
+        // Show clock and custom text
+        function showClock() {
+            const input = document.getElementById('customTextInput');
+            const text = input.value.trim();
+            
+            document.getElementById('inputSection').classList.add('hidden');
+            document.getElementById('clockContainer').classList.remove('hidden');
+            
+            if (text) {
+                const customTextEl = document.getElementById('customText');
+                customTextEl.textContent = text;
+                customTextEl.classList.remove('hidden');
+            }
+            
+            document.getElementById('reloadBtn').style.display = 'block';
+            
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        // Reload page
+        function reloadPage() {
+            location.reload();
+        }
+
+        // Flip clock logic
+        function flipCard(card, newValue) {
+            const front = card.querySelector('.flip-card-front');
+            const back = card.querySelector('.flip-card-back');
+            const currentValue = front.textContent;
+
+            if (currentValue !== newValue) {
+                back.textContent = newValue;
+                card.classList.add('flipping');
+
+                setTimeout(() => {
+                    front.textContent = newValue;
+                    card.classList.remove('flipping');
+                }, 600);
+            }
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const hanoiTime = new Date(utc + (3600000 * 7));
+
+            const hours = String(hanoiTime.getHours()).padStart(2, '0');
+            const minutes = String(hanoiTime.getMinutes()).padStart(2, '0');
+
+            flipCard(document.getElementById('hourTens'), hours[0]);
+            flipCard(document.getElementById('hourOnes'), hours[1]);
+            flipCard(document.getElementById('minuteTens'), minutes[0]);
+            flipCard(document.getElementById('minuteOnes'), minutes[1]);
+
+            checkSpecialTime(hours, minutes);
+
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                timeZone: 'Asia/Ho_Chi_Minh'
+            };
+            const dateStr = hanoiTime.toLocaleDateString('vi-VN', options);
+            document.getElementById('dateDisplay').textContent = dateStr;
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('customTextInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                showClock();
+            }
+        });
+    </script>
+</body>
+</html>
